@@ -275,28 +275,27 @@ resource "aws_iam_role_policy_attachment" "cni_policy" {
 # EKS GPU Managed Node Group
 # -------------------------
 
+# -------------------------
+# EKS Managed Node Group
+# -------------------------
+
 resource "aws_eks_node_group" "nodes" {
   cluster_name = aws_eks_cluster.eks.name
 
-  node_group_name = "${var.cluster_name}-gpu-nodes"
+  node_group_name = "${var.cluster_name}-nodes"
 
   node_role_arn = aws_iam_role.eks_nodes.arn
 
   subnet_ids = aws_subnet.private[*].id
 
-  # GPU instance
   instance_types = [
-    "g4dn.xlarge"
+    var.node_instance_type
   ]
 
-  # IMPORTANT:
-  # Tell EKS to use its AL2023 NVIDIA GPU AMI
-  ami_type = "AL2023_x86_64_NVIDIA"
-
   scaling_config {
-    desired_size = 1
-    min_size     = 1
-    max_size     = 1
+    desired_size = var.desired_nodes
+    min_size     = var.min_nodes
+    max_size     = var.max_nodes
   }
 
   capacity_type = "ON_DEMAND"
@@ -308,10 +307,9 @@ resource "aws_eks_node_group" "nodes" {
   ]
 
   tags = {
-    Name = "${var.cluster_name}-gpu-worker"
+    Name = "${var.cluster_name}-worker"
   }
 }
-
 # -------------------------
 # EKS Pod Identity Agent
 # -------------------------
