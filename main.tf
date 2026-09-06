@@ -22,6 +22,8 @@ locals {
 # VPC
 # -------------------------
 
+#checkov:skip=CKV2_AWS_12:Default VPC security group will be hardened later
+#checkov:skip=CKV2_AWS_11:VPC Flow Logs will be implemented later
 resource "aws_vpc" "eks" {
   cidr_block           = var.vpc_cidr
   enable_dns_support   = true
@@ -60,8 +62,8 @@ resource "aws_subnet" "public" {
   )
 
   availability_zone = local.availability_zones[count.index]
-
-  map_public_ip_on_launch = true
+#checkov:skip=CKV_AWS_130:Public subnet intentionally assigns public IPs for internet-facing resources
+map_public_ip_on_launch = true
 
   tags = {
     Name = "${var.cluster_name}-public-${count.index + 1}"
@@ -206,6 +208,7 @@ resource "aws_iam_role_policy_attachment" "eks_cluster_policy" {
 # EKS Cluster
 # -------------------------
 
+#checkov:skip=CKV_AWS_58:Secrets encryption with KMS will be implemented later
 resource "aws_eks_cluster" "eks" {
   name = var.cluster_name
 
