@@ -25,9 +25,7 @@ jobs:
     name: Terraform CI
     runs-on: ubuntu-latest
 
-    defaults:
-      run:
-        working-directory: terraform
+
 
     steps:
 
@@ -112,9 +110,6 @@ jobs:
     environment:
       name: production
 
-    defaults:
-      run:
-        working-directory: terraform
 
     steps:
 
