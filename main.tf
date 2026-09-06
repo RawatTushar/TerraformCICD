@@ -213,11 +213,19 @@ resource "aws_eks_cluster" "eks" {
 
   version = "1.33"
 
+  enabled_cluster_log_types = [
+    "api",
+    "audit",
+    "authenticator",
+    "controllerManager",
+    "scheduler"
+  ]
+
   vpc_config {
     subnet_ids = aws_subnet.private[*].id
 
     endpoint_private_access = true
-    endpoint_public_access  = true
+    endpoint_public_access  = false
   }
 
   depends_on = [
@@ -228,7 +236,6 @@ resource "aws_eks_cluster" "eks" {
     Name = var.cluster_name
   }
 }
-
 # -------------------------
 # Node IAM Role
 # -------------------------
