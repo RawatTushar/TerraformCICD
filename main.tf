@@ -62,8 +62,8 @@ resource "aws_subnet" "public" {
   )
 
   availability_zone = local.availability_zones[count.index]
-#checkov:skip=CKV_AWS_130:Public subnet intentionally assigns public IPs for internet-facing resources
-map_public_ip_on_launch = true
+  #checkov:skip=CKV_AWS_130:Public subnet intentionally assigns public IPs for internet-facing resources
+  map_public_ip_on_launch = true
 
   tags = {
     Name = "${var.cluster_name}-public-${count.index + 1}"
