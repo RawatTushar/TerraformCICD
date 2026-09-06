@@ -42,7 +42,7 @@ jobs:
       # AWS Authentication using GitHub OIDC
       # Must happen BEFORE Terraform Init because
       # Terraform needs AWS credentials to access the backend.
-      # ----------------------------------------------------------
+      # ---------------------------------------------------------
       - name: Configure AWS credentials
         uses: aws-actions/configure-aws-credentials@v4
         with:
