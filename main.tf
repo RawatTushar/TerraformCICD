@@ -206,7 +206,7 @@ resource "aws_iam_role_policy_attachment" "eks_cluster_policy" {
 
 # -------------------------
 # EKS Cluster
-# -------------------------
+# ------------------------
 
 #checkov:skip=CKV_AWS_58:Secrets encryption with KMS will be implemented later
 resource "aws_eks_cluster" "eks" {
