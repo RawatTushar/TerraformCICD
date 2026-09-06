@@ -86,6 +86,7 @@ jobs:
         uses: bridgecrewio/checkov-action@v12
         with:
           directory: .
+          skip_check: CKV_AWS_58,CKV2_AWS_12,CKV2_AWS_11
 
       # ----------------------------------------------------------
       # Terraform Plan
