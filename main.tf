@@ -228,7 +228,7 @@ resource "aws_eks_cluster" "eks" {
     subnet_ids = aws_subnet.private[*].id
 
     endpoint_private_access = true
-    endpoint_public_access  = false
+    endpoint_public_access  = true
   }
 
   depends_on = [
@@ -286,26 +286,37 @@ resource "aws_iam_role_policy_attachment" "cni_policy" {
 # EKS Managed Node Group
 # -------------------------
 
-resource "aws_eks_node_group" "nodes" {
+# ============================================================
+# CPU EKS Managed Node Group
+# ============================================================
+
+resource "aws_eks_node_group" "cpu_nodes" {
   cluster_name = aws_eks_cluster.eks.name
 
-  node_group_name = "${var.cluster_name}-nodes"
+  node_group_name = "${var.cluster_name}-cpu-nodes"
 
   node_role_arn = aws_iam_role.eks_nodes.arn
 
   subnet_ids = aws_subnet.private[*].id
 
   instance_types = [
-    var.node_instance_type
+    var.cpu_node_instance_type
   ]
 
+  # Standard Amazon Linux 2023 EKS AMI
+  ami_type = "AL2023_x86_64_STANDARD"
+
   scaling_config {
-    desired_size = var.desired_nodes
-    min_size     = var.min_nodes
-    max_size     = var.max_nodes
+    desired_size = var.cpu_desired_nodes
+    min_size     = var.cpu_min_nodes
+    max_size     = var.cpu_max_nodes
   }
 
   capacity_type = "ON_DEMAND"
+
+  labels = {
+    workload = "cpu"
+  }
 
   depends_on = [
     aws_iam_role_policy_attachment.worker_node,
@@ -314,20 +325,74 @@ resource "aws_eks_node_group" "nodes" {
   ]
 
   tags = {
-    Name = "${var.cluster_name}-worker"
+    Name     = "${var.cluster_name}-cpu-worker"
+    Workload = "cpu"
+  }
+}
+
+
+# ============================================================
+# GPU EKS Managed Node Group
+# ============================================================
+
+resource "aws_eks_node_group" "gpu_nodes" {
+  cluster_name = aws_eks_cluster.eks.name
+
+  node_group_name = "${var.cluster_name}-gpu-nodes"
+
+  node_role_arn = aws_iam_role.eks_nodes.arn
+
+  subnet_ids = aws_subnet.private[*].id
+
+  instance_types = [
+    var.gpu_node_instance_type
+  ]
+
+  ami_type = "AL2023_x86_64_NVIDIA"
+
+  scaling_config {
+    desired_size = var.gpu_desired_nodes
+    min_size     = var.gpu_min_nodes
+    max_size     = var.gpu_max_nodes
+  }
+
+  capacity_type = "ON_DEMAND"
+  disk_size = 50
+
+
+  labels = {
+    workload    = "gpu"
+    accelerator = "nvidia-t4"
+  }
+
+  taint {
+    key    = "nvidia.com/gpu"
+    value  = "true"
+    effect = "NO_SCHEDULE"
+  }
+
+  depends_on = [
+    aws_iam_role_policy_attachment.worker_node,
+    aws_iam_role_policy_attachment.ecr_read_only,
+    aws_iam_role_policy_attachment.cni_policy
+  ]
+
+  tags = {
+    Name     = "${var.cluster_name}-gpu-worker"
+    Workload = "gpu"
   }
 }
 # -------------------------
 # EKS Pod Identity Agent
 # -------------------------
-
 resource "aws_eks_addon" "pod_identity" {
   cluster_name = aws_eks_cluster.eks.name
 
   addon_name = "eks-pod-identity-agent"
 
   depends_on = [
-    aws_eks_node_group.nodes
+    aws_eks_node_group.cpu_nodes,
+    aws_eks_node_group.gpu_nodes
   ]
 }
 
@@ -402,7 +467,9 @@ resource "aws_eks_addon" "vpc_cni" {
 # CoreDNS
 # -------------------------
 
+
 resource "aws_eks_addon" "coredns" {
+
   cluster_name = aws_eks_cluster.eks.name
 
   addon_name = "coredns"
@@ -410,10 +477,9 @@ resource "aws_eks_addon" "coredns" {
   resolve_conflicts_on_create = "OVERWRITE"
 
   depends_on = [
-    aws_eks_node_group.nodes
+    aws_eks_node_group.cpu_nodes
   ]
 }
-
 # -------------------------
 # Kube Proxy
 # -------------------------
